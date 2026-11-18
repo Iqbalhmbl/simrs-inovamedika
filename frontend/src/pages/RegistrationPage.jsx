@@ -20,8 +20,13 @@ export default function RegistrationPage() {
     return new Date().toISOString().slice(0, 10);
   }
 
+  function loadPatients(q) {
+    yiiApi.get('/patients', { params: { search: q || undefined } }).then((res) => setPatients(res.data.items || res.data));
+  }
+
   useEffect(() => {
     yiiApi.get('/polyclinics').then((res) => setPolyclinics(res.data.items || res.data));
+    loadPatients(); // show the full patient list by default instead of an empty table
   }, []);
 
   useEffect(() => {
@@ -34,8 +39,7 @@ export default function RegistrationPage() {
 
   async function handleSearch(e) {
     e.preventDefault();
-    const res = await yiiApi.get('/patients', { params: { search } });
-    setPatients(res.data.items || res.data);
+    loadPatients(search);
   }
 
   async function handleCreatePatient(e) {
@@ -45,6 +49,7 @@ export default function RegistrationPage() {
       setSelectedPatient(res.data);
       setShowNewPatientModal(false);
       setNewPatient(EMPTY_PATIENT);
+      loadPatients(search);
       success(`Pasien baru terdaftar dengan No. RM: ${res.data.mrn}`);
     } catch (err) {
       alertError(err);
