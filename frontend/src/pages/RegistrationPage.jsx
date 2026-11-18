@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { yiiApi } from '../api/client';
+import Modal from '../components/Modal';
+
+const EMPTY_PATIENT = { name: '', birth_date: '', gender: 'L', nik: '', phone: '' };
 
 export default function RegistrationPage() {
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [newPatient, setNewPatient] = useState({ name: '', birth_date: '', gender: 'L', nik: '', phone: '' });
+  const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+  const [newPatient, setNewPatient] = useState(EMPTY_PATIENT);
   const [polyclinics, setPolyclinics] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [form, setForm] = useState({ polyclinic_id: '', doctor_id: '', visit_date: today() });
@@ -41,9 +45,17 @@ export default function RegistrationPage() {
       const res = await yiiApi.post('/patients', newPatient);
       setSelectedPatient(res.data);
       setMessage(`Pasien baru terdaftar dengan No. RM: ${res.data.mrn}`);
+      setShowNewPatientModal(false);
+      setNewPatient(EMPTY_PATIENT);
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function closeNewPatientModal() {
+    setShowNewPatientModal(false);
+    setNewPatient(EMPTY_PATIENT);
+    setError(null);
   }
 
   async function handleRegisterVisit(e) {
@@ -102,7 +114,16 @@ export default function RegistrationPage() {
             </tbody>
           </table>
 
-          <h3 style={{ marginTop: 20 }}>Atau Daftarkan Pasien Baru</h3>
+          <div style={{ marginTop: 20 }}>
+            <button type="button" onClick={() => setShowNewPatientModal(true)}>
+              + Daftarkan Pasien Baru
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showNewPatientModal && (
+        <Modal title="Daftarkan Pasien Baru" onClose={closeNewPatientModal}>
           <form onSubmit={handleCreatePatient}>
             <div className="form-row">
               <div>
@@ -122,6 +143,8 @@ export default function RegistrationPage() {
                   onChange={(e) => setNewPatient({ ...newPatient, birth_date: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="form-row">
               <div>
                 <label>Jenis Kelamin</label>
                 <select
@@ -147,9 +170,13 @@ export default function RegistrationPage() {
                 />
               </div>
             </div>
-            <button type="submit">Daftarkan Pasien Baru</button>
+            {error && <p className="error">{error}</p>}
+            <button type="submit">Simpan Pasien</button>{' '}
+            <button type="button" className="secondary" onClick={closeNewPatientModal}>
+              Batal
+            </button>
           </form>
-        </div>
+        </Modal>
       )}
 
       {selectedPatient && (

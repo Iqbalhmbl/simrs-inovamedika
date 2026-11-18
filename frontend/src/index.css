@@ -35,3 +35,24 @@ button.secondary { background: #e5e5e5; color: #222; }
 .badge.cancelled { background: #6c757d; }
 .login-page { display: flex; align-items: center; justify-content: center; height: 100vh; }
 .login-box { width: 340px; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal-box {
+  background: #fff; border-radius: 8px; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid #e5e5e5;
+}
+.modal-header h3 { margin: 0; }
+.modal-close {
+  background: none; border: none; color: #666; font-size: 20px;
+  line-height: 1; padding: 0 4px; cursor: pointer;
+}
+.modal-close:hover { color: #000; }
+.modal-body { padding: 20px; }
