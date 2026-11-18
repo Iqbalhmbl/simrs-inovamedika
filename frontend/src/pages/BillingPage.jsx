@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { yiiApi } from '../api/client';
+import { useAlert } from '../context/AlertContext';
 
 function formatRp(value) {
   return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
@@ -8,11 +9,10 @@ function formatRp(value) {
 
 export default function BillingPage() {
   const { visitId } = useParams();
+  const { success, error: alertError } = useAlert();
   const [invoice, setInvoice] = useState(null);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('cash');
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
 
   // Problem D3 (Pembayaran Ganda): generated ONCE per "Bayar" click and
   // reused on every retry of that same attempt, so a network blip followed
@@ -29,8 +29,6 @@ export default function BillingPage() {
 
   async function handlePay(e) {
     e.preventDefault();
-    setError(null);
-    setMessage(null);
 
     if (!idempotencyKeyRef.current) {
       idempotencyKeyRef.current =
@@ -43,13 +41,13 @@ export default function BillingPage() {
         method,
         idempotency_key: idempotencyKeyRef.current,
       });
-      setMessage('Pembayaran berhasil dicatat.');
       idempotencyKeyRef.current = null; // success: free to generate a new key for the next payment
       setAmount('');
       load();
+      success('Pembayaran berhasil dicatat.');
     } catch (err) {
       // Leave idempotencyKeyRef as-is so a manual retry reuses the same key.
-      setError(err.message);
+      alertError(err);
     }
   }
 
@@ -98,9 +96,6 @@ export default function BillingPage() {
           <button type="submit">Bayar</button>
         </form>
       )}
-
-      {message && <p style={{ color: '#198754' }}>{message}</p>}
-      {error && <p className="error">{error}</p>}
 
       <div className="card">
         <h3>Riwayat Pembayaran</h3>

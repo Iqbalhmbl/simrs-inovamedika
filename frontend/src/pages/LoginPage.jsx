@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { error: alertError } = useAlert();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
     setLoading(true);
     try {
       await login(username, password);
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,6 @@ export default function LoginPage() {
             />
           </div>
         </div>
-        {error && <p className="error">{error}</p>}
         <button type="submit" disabled={loading} style={{ width: '100%' }}>
           {loading ? 'Memproses...' : 'Masuk'}
         </button>

@@ -28,4 +28,18 @@ class VisitProcedure extends ActiveRecord
     {
         return $this->hasOne(MedicalProcedure::class, ['id' => 'medical_procedure_id']);
     }
+
+    /** See Visit::fields() - Yii2 drops a relation from JSON unless it's named here. */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['medical_procedure'] = function (self $model) {
+            return $model->medicalProcedure ? [
+                'id' => $model->medicalProcedure->id,
+                'name' => $model->medicalProcedure->name,
+                'tariff' => $model->medicalProcedure->tariff,
+            ] : null;
+        };
+        return $fields;
+    }
 }

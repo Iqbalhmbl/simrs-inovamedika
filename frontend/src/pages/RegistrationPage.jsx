@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { yiiApi } from '../api/client';
 import Modal from '../components/Modal';
+import { useAlert } from '../context/AlertContext';
 
 const EMPTY_PATIENT = { name: '', birth_date: '', gender: 'L', nik: '', phone: '' };
 
 export default function RegistrationPage() {
+  const { success, error: alertError } = useAlert();
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -13,8 +15,6 @@ export default function RegistrationPage() {
   const [polyclinics, setPolyclinics] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [form, setForm] = useState({ polyclinic_id: '', doctor_id: '', visit_date: today() });
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
 
   function today() {
     return new Date().toISOString().slice(0, 10);
@@ -40,28 +40,24 @@ export default function RegistrationPage() {
 
   async function handleCreatePatient(e) {
     e.preventDefault();
-    setError(null);
     try {
       const res = await yiiApi.post('/patients', newPatient);
       setSelectedPatient(res.data);
-      setMessage(`Pasien baru terdaftar dengan No. RM: ${res.data.mrn}`);
       setShowNewPatientModal(false);
       setNewPatient(EMPTY_PATIENT);
+      success(`Pasien baru terdaftar dengan No. RM: ${res.data.mrn}`);
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
   function closeNewPatientModal() {
     setShowNewPatientModal(false);
     setNewPatient(EMPTY_PATIENT);
-    setError(null);
   }
 
   async function handleRegisterVisit(e) {
     e.preventDefault();
-    setError(null);
-    setMessage(null);
     try {
       const res = await yiiApi.post('/visits/register', {
         patient_id: selectedPatient.id,
@@ -69,10 +65,10 @@ export default function RegistrationPage() {
         polyclinic_id: form.polyclinic_id,
         visit_date: form.visit_date,
       });
-      setMessage(`Berhasil! Nomor antrean: ${res.data.queue_number}`);
       setSelectedPatient(null);
+      success(`Berhasil! Nomor antrean: ${res.data.queue_number}`);
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
@@ -170,7 +166,6 @@ export default function RegistrationPage() {
                 />
               </div>
             </div>
-            {error && <p className="error">{error}</p>}
             <button type="submit">Simpan Pasien</button>{' '}
             <button type="button" className="secondary" onClick={closeNewPatientModal}>
               Batal
@@ -230,9 +225,6 @@ export default function RegistrationPage() {
           </form>
         </div>
       )}
-
-      {message && <p className="card" style={{ color: '#198754' }}>{message}</p>}
-      {error && <p className="error">{error}</p>}
     </div>
   );
 }

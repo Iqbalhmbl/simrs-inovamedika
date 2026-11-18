@@ -24,4 +24,18 @@ class PrescriptionItem extends ActiveRecord
     {
         return $this->hasOne(Medicine::class, ['id' => 'medicine_id']);
     }
+
+    /** See Visit::fields() - Yii2 drops a relation from JSON unless it's named here. */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['medicine'] = function (self $model) {
+            return $model->medicine ? [
+                'id' => $model->medicine->id,
+                'name' => $model->medicine->name,
+                'unit' => $model->medicine->unit,
+            ] : null;
+        };
+        return $fields;
+    }
 }

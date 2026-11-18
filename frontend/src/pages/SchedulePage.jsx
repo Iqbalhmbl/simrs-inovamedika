@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import { yiiApi } from '../api/client';
+import { useAlert } from '../context/AlertContext';
 
 const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 export default function SchedulePage() {
+  const { error: alertError } = useAlert();
   const [polyclinics, setPolyclinics] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [polyclinicId, setPolyclinicId] = useState('');
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     yiiApi.get('/polyclinics').then((res) => setPolyclinics(res.data.items || res.data));
   }, []);
 
   useEffect(() => {
-    setError(null);
     const params = {};
     if (polyclinicId) params.polyclinic_id = polyclinicId;
     yiiApi
       .get('/doctor-schedules', { params })
       .then((res) => setSchedules(res.data.items || res.data))
-      .catch((err) => setError(err.message));
+      .catch((err) => alertError(err));
   }, [polyclinicId]);
 
   // Group by day of week (0=Sunday..6=Saturday), each day's rows sorted by start time.
@@ -47,8 +47,6 @@ export default function SchedulePage() {
             </select>
           </div>
         </div>
-
-        {error && <p className="error">{error}</p>}
 
         {DAY_NAMES.map((dayName, dow) => (
           <div key={dow} style={{ marginTop: 20 }}>

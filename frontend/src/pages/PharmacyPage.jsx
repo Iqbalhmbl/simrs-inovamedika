@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { yiiApi } from '../api/client';
+import { useAlert } from '../context/AlertContext';
 
 export default function PharmacyPage() {
+  const { success, error: alertError } = useAlert();
   const [prescriptions, setPrescriptions] = useState([]);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
 
   function load() {
     yiiApi.get('/prescriptions', { params: { status: 'pending' } }).then((res) => setPrescriptions(res.data.items || res.data));
@@ -13,23 +13,19 @@ export default function PharmacyPage() {
   useEffect(load, []);
 
   async function dispense(id) {
-    setError(null);
-    setMessage(null);
     try {
       await yiiApi.post(`/prescriptions/${id}/dispense`);
-      setMessage(`Resep #${id} berhasil diproses dan obat diserahkan.`);
       load();
+      success(`Resep #${id} berhasil diproses dan obat diserahkan.`);
     } catch (err) {
       // e.g. "Stok obat tidak mencukupi..." from PharmacyService (problem D2)
-      setError(err.message);
+      alertError(err);
     }
   }
 
   return (
     <div>
       <h1>Farmasi - Resep Menunggu</h1>
-      {message && <p style={{ color: '#198754' }}>{message}</p>}
-      {error && <p className="error">{error}</p>}
       <div className="card">
         <table>
           <thead>

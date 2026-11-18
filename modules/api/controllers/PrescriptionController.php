@@ -15,6 +15,7 @@ use yii\web\BadRequestHttpException;
  * POST /api/prescriptions {"visit_id":1, "items":[{"medicine_id":1,"dose":"3x1","frequency":"3x sehari","qty":10}]}
  * POST /api/prescriptions/<id>/dispense  - petugas farmasi processes & deducts stock (PharmacyService)
  * GET  /api/prescriptions?status=pending  - farmasi queue
+ * GET  /api/prescriptions?visit_id=1      - this visit's prescription history
  */
 class PrescriptionController extends BaseApiController
 {
@@ -43,6 +44,9 @@ class PrescriptionController extends BaseApiController
             $query = Prescription::find()->with(['items.medicine'])->orderBy(['created_at' => SORT_DESC]);
             if ($status = Yii::$app->request->get('status')) {
                 $query->andWhere(['status' => $status]);
+            }
+            if ($visitId = Yii::$app->request->get('visit_id')) {
+                $query->andWhere(['visit_id' => $visitId]);
             }
             return new ActiveDataProvider(['query' => $query, 'pagination' => ['pageSize' => 30]]);
         };

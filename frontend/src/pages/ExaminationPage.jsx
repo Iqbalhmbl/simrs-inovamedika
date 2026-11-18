@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { yiiApi } from '../api/client';
+import { useAlert } from '../context/AlertContext';
+
+function formatRp(value) {
+  return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+}
 
 export default function ExaminationPage() {
   const { visitId } = useParams();
+  const { success, error: alertError } = useAlert();
   const [visit, setVisit] = useState(null);
   const [record, setRecord] = useState({
     anamnesis: '', complaint: '', physical_exam: '',
@@ -13,9 +19,21 @@ export default function ExaminationPage() {
   const [procedures, setProcedures] = useState([]);
   const [medicines, setMedicines] = useState([]);
   const [visitProcedures, setVisitProcedures] = useState([]);
+  const [selectedProcedureId, setSelectedProcedureId] = useState('');
+  const [prescriptions, setPrescriptions] = useState([]);
   const [prescriptionItems, setPrescriptionItems] = useState([{ medicine_id: '', dose: '', frequency: '', qty: 1 }]);
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+
+  const loadVisitProcedures = useCallback(() => {
+    yiiApi
+      .get('/visit-procedures', { params: { visit_id: visitId } })
+      .then((res) => setVisitProcedures(res.data.items || res.data));
+  }, [visitId]);
+
+  const loadPrescriptions = useCallback(() => {
+    yiiApi
+      .get('/prescriptions', { params: { visit_id: visitId } })
+      .then((res) => setPrescriptions(res.data.items || res.data));
+  }, [visitId]);
 
   useEffect(() => {
     yiiApi.get(`/visits/${visitId}`).then((res) => setVisit(res.data));
@@ -25,39 +43,49 @@ export default function ExaminationPage() {
       .get(`/medical-records/by-visit/${visitId}`)
       .then((res) => setRecord({ ...record, ...res.data, vital_signs: res.data.vital_signs || record.vital_signs }))
       .catch(() => {}); // no record yet is fine
+    loadVisitProcedures();
+    loadPrescriptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visitId]);
 
   async function saveRecord(e) {
     e.preventDefault();
-    setError(null);
     try {
-      const res = await yiiApi.post('/medical-records', { visit_id: visitId, ...record });
-      setMessage('Rekam medis tersimpan.');
+      await yiiApi.post('/medical-records', { visit_id: visitId, ...record });
+      success('Rekam medis tersimpan.');
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
-  async function addProcedure(procedureId) {
+  async function addProcedure() {
+    if (!selectedProcedureId) {
+      alertError('Pilih tindakan terlebih dahulu.');
+      return;
+    }
     try {
-      const res = await yiiApi.post('/visit-procedures', { visit_id: visitId, medical_procedure_id: procedureId, qty: 1 });
-      setVisitProcedures([...visitProcedures, res.data]);
+      await yiiApi.post('/visit-procedures', {
+        visit_id: visitId,
+        medical_procedure_id: selectedProcedureId,
+        qty: 1,
+      });
+      setSelectedProcedureId('');
+      loadVisitProcedures();
+      success('Tindakan medis berhasil ditambahkan.');
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
   async function submitPrescription(e) {
     e.preventDefault();
-    setError(null);
     const items = prescriptionItems.filter((i) => i.medicine_id);
     if (items.length === 0) {
-      setError('Pilih minimal satu obat sebelum membuat resep.');
+      alertError('Pilih minimal satu obat sebelum membuat resep.');
       return;
     }
     if (!visit?.doctor_id) {
-      setError('Dokter untuk kunjungan ini tidak ditemukan. Muat ulang halaman.');
+      alertError('Dokter untuk kunjungan ini tidak ditemukan. Muat ulang halaman.');
       return;
     }
     try {
@@ -66,21 +94,27 @@ export default function ExaminationPage() {
         doctor_id: visit.doctor_id,
         items,
       });
-      setMessage('Resep berhasil dibuat.');
       setPrescriptionItems([{ medicine_id: '', dose: '', frequency: '', qty: 1 }]);
+      loadPrescriptions();
+      success('Resep berhasil dibuat.');
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
   async function requestLab(testName) {
     try {
       await yiiApi.post('/lab-requests', { visit_id: visitId, test_name: testName });
-      setMessage(`Permintaan lab "${testName}" dikirim.`);
+      success(`Permintaan lab "${testName}" dikirim.`);
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
+
+  const procedureTotal = visitProcedures.reduce(
+    (sum, vp) => sum + Number(vp.tariff_at_time || 0) * Number(vp.qty || 1),
+    0
+  );
 
   return (
     <div>
@@ -90,8 +124,6 @@ export default function ExaminationPage() {
           {visit.patient?.name} ({visit.patient?.mrn}) &middot; {visit.polyclinic?.name} &middot; dr. {visit.doctor?.name}
         </p>
       )}
-      {message && <p style={{ color: '#198754' }}>{message}</p>}
-      {error && <p className="error">{error}</p>}
 
       <form className="card" onSubmit={saveRecord}>
         <h3>Rekam Medis Elektronik</h3>
@@ -167,27 +199,91 @@ export default function ExaminationPage() {
         <h3>Tindakan Medis</h3>
         <div className="form-row">
           <div>
-            <select onChange={(e) => e.target.value && addProcedure(e.target.value)} defaultValue="">
-              <option value="" disabled>
-                -- Tambah Tindakan --
-              </option>
+            <label>Pilih Tindakan</label>
+            <select value={selectedProcedureId} onChange={(e) => setSelectedProcedureId(e.target.value)}>
+              <option value="">-- Pilih Tindakan --</option>
               {procedures.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (Rp {Number(p.tariff).toLocaleString('id-ID')})
+                  {p.name} ({formatRp(p.tariff)})
                 </option>
               ))}
             </select>
           </div>
+          <div style={{ flex: 'none', alignSelf: 'flex-end' }}>
+            <button type="button" onClick={addProcedure}>
+              + Tambah Tindakan
+            </button>
+          </div>
         </div>
-        <ul>
-          {visitProcedures.map((vp) => (
-            <li key={vp.id}>Tindakan #{vp.medical_procedure_id} x{vp.qty}</li>
-          ))}
-        </ul>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Tindakan</th>
+              <th>Qty</th>
+              <th>Tarif</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visitProcedures.map((vp) => (
+              <tr key={vp.id}>
+                <td>{vp.medical_procedure?.name || `#${vp.medical_procedure_id}`}</td>
+                <td>{vp.qty}</td>
+                <td>{formatRp(vp.tariff_at_time)}</td>
+                <td>{formatRp(Number(vp.tariff_at_time) * Number(vp.qty))}</td>
+              </tr>
+            ))}
+            {visitProcedures.length === 0 && (
+              <tr>
+                <td colSpan={4}>Belum ada tindakan medis.</td>
+              </tr>
+            )}
+          </tbody>
+          {visitProcedures.length > 0 && (
+            <tfoot>
+              <tr>
+                <td colSpan={3}><strong>Total Tindakan</strong></td>
+                <td><strong>{formatRp(procedureTotal)}</strong></td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+
+      <div className="card">
+        <h3>Resep Obat Tersimpan</h3>
+        {prescriptions.length === 0 && <p style={{ color: '#888', fontSize: 14 }}>Belum ada resep untuk kunjungan ini.</p>}
+        {prescriptions.map((p) => (
+          <div key={p.id} style={{ marginBottom: 12 }}>
+            <strong>Resep #{p.id}</strong>{' '}
+            <span className={`badge ${p.status === 'dispensed' ? 'completed' : 'waiting'}`}>{p.status}</span>
+            <table>
+              <thead>
+                <tr>
+                  <th>Obat</th>
+                  <th>Dosis</th>
+                  <th>Frekuensi</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(p.items || []).map((i) => (
+                  <tr key={i.id}>
+                    <td>{i.medicine?.name || `#${i.medicine_id}`}</td>
+                    <td>{i.dose}</td>
+                    <td>{i.frequency}</td>
+                    <td>{i.qty}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       <form className="card" onSubmit={submitPrescription}>
-        <h3>Resep Obat</h3>
+        <h3>Buat Resep Baru</h3>
         {prescriptionItems.map((item, idx) => (
           <div className="form-row" key={idx}>
             <div>

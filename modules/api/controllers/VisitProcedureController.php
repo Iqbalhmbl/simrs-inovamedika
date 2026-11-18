@@ -7,10 +7,12 @@ use app\models\VisitProcedure;
 use app\models\MedicalProcedure;
 use app\services\AuditService;
 use app\services\BillingService;
+use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
+ * GET    /api/visit-procedures?visit_id=1  - procedures billed to a visit (voided ones excluded)
  * POST   /api/visit-procedures {"visit_id":..., "medical_procedure_id":..., "qty":1}
  * DELETE /api/visit-procedures/<id>  - voids (never hard-deletes) and re-bills
  */
@@ -36,6 +38,14 @@ class VisitProcedureController extends BaseApiController
         // (visit_id, medical_procedure_id, qty), skipping the tariff_at_time
         // snapshot entirely, which then violated the NOT NULL constraint.
         unset($actions['create'], $actions['delete']);
+        $actions['index']['prepareDataProvider'] = function () {
+            $query = VisitProcedure::find()->with(['medicalProcedure'])->where(['is_voided' => false]);
+            if ($visitId = Yii::$app->request->get('visit_id')) {
+                $query->andWhere(['visit_id' => $visitId]);
+            }
+            $query->orderBy(['created_at' => SORT_ASC]);
+            return new ActiveDataProvider(['query' => $query, 'pagination' => ['pageSize' => 50]]);
+        };
         return $actions;
     }
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { yiiApi } from '../api/client';
+import { useAlert } from '../context/AlertContext';
 
 export default function LabPage() {
+  const { success, error: alertError } = useAlert();
   const [requests, setRequests] = useState([]);
   const [resultText, setResultText] = useState({});
-  const [error, setError] = useState(null);
 
   function load() {
     yiiApi.get('/lab-requests', { params: { status: 'requested' } }).then((res) => setRequests(res.data.items || res.data));
@@ -13,19 +14,18 @@ export default function LabPage() {
   useEffect(load, []);
 
   async function submitResult(requestId) {
-    setError(null);
     try {
       await yiiApi.post('/lab-results', { lab_request_id: requestId, result_text: resultText[requestId] || '' });
       load();
+      success('Hasil pemeriksaan berhasil disimpan.');
     } catch (err) {
-      setError(err.message);
+      alertError(err);
     }
   }
 
   return (
     <div>
       <h1>Laboratorium - Permintaan Pemeriksaan</h1>
-      {error && <p className="error">{error}</p>}
       <div className="card">
         <table>
           <thead>
