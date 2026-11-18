@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import QueuePage from './pages/QueuePage';
+import SchedulePage from './pages/SchedulePage';
 import ExaminationPage from './pages/ExaminationPage';
 import PharmacyPage from './pages/PharmacyPage';
 import LabPage from './pages/LabPage';
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/registration" replace />} />
                 <Route path="/registration" element={<RegistrationPage />} />
                 <Route path="/queue" element={<QueuePage />} />
+                <Route path="/schedule" element={<SchedulePage />} />
                 <Route path="/examination/:visitId" element={<ExaminationPage />} />
                 <Route path="/pharmacy" element={<PharmacyPage />} />
                 <Route path="/lab" element={<LabPage />} />

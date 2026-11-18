@@ -33,4 +33,29 @@ class DoctorSchedule extends ActiveRecord
     {
         return $this->hasOne(Polyclinic::class, ['id' => 'polyclinic_id']);
     }
+
+    /**
+     * See Visit::fields() for why this is needed: Yii2's REST serializer
+     * drops a relation unless it's named here, even one already eager-loaded
+     * with with() - DoctorScheduleController's index action loads 'doctor'
+     * and 'polyclinic' specifically so the schedule screen can show them.
+     */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['doctor'] = function (self $model) {
+            return $model->doctor ? [
+                'id' => $model->doctor->id,
+                'name' => $model->doctor->name,
+                'specialization' => $model->doctor->specialization,
+            ] : null;
+        };
+        $fields['polyclinic'] = function (self $model) {
+            return $model->polyclinic ? [
+                'id' => $model->polyclinic->id,
+                'name' => $model->polyclinic->name,
+            ] : null;
+        };
+        return $fields;
+    }
 }

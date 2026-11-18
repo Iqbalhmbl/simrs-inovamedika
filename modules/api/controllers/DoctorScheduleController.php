@@ -11,7 +11,7 @@ class DoctorScheduleController extends BaseApiController
     public $modelClass = DoctorSchedule::class;
 
     public $rbacRoles = [
-        '*' => ['admin', 'petugas_pendaftaran', 'dokter'],
+        '*' => ['admin', 'petugas_pendaftaran', 'dokter', 'kasir', 'petugas_farmasi', 'petugas_laboratorium'],
         'create' => ['admin'],
         'update' => ['admin'],
         'delete' => ['admin'],

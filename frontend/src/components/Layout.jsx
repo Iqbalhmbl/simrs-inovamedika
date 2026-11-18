@@ -7,17 +7,18 @@ import { useAuth } from '../context/AuthContext';
  * about not showing a dead end.
  */
 const NAV_BY_ROLE = {
-  admin: ['registration', 'queue', 'pharmacy', 'lab', 'dashboard'],
-  petugas_pendaftaran: ['registration', 'queue'],
-  dokter: ['queue', 'dashboard'],
-  petugas_farmasi: ['pharmacy'],
-  petugas_laboratorium: ['lab'],
-  kasir: ['queue', 'dashboard'],
+  admin: ['registration', 'queue', 'schedule', 'pharmacy', 'lab', 'dashboard'],
+  petugas_pendaftaran: ['registration', 'queue', 'schedule'],
+  dokter: ['queue', 'schedule', 'dashboard'],
+  petugas_farmasi: ['pharmacy', 'schedule'],
+  petugas_laboratorium: ['lab', 'schedule'],
+  kasir: ['queue', 'schedule', 'dashboard'],
 };
 
 const LINKS = {
   registration: { to: '/registration', label: 'Pendaftaran' },
   queue: { to: '/queue', label: 'Antrean & Kunjungan' },
+  schedule: { to: '/schedule', label: 'Jadwal Dokter' },
   pharmacy: { to: '/pharmacy', label: 'Farmasi' },
   lab: { to: '/lab', label: 'Laboratorium' },
   dashboard: { to: '/dashboard', label: 'Dashboard' },
