@@ -1,0 +1,25 @@
+{
+  "name": "simrs-node-services",
+  "version": "1.0.0",
+  "description": "SIMRS backend services (Node.js) - dashboard aggregation API and external lab-integration API. Read/integration layer only; all business-logic writes go through the Yii2 API (see docs/architecture.md).",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.2.0",
+    "axios": "^1.7.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

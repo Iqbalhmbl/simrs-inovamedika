@@ -1,0 +1,268 @@
+{
+  "info": {
+    "name": "SIMRS - Inova Medika (Real Case Test)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "yii_base", "value": "http://localhost:8080/api" },
+    { "key": "node_base", "value": "http://localhost:4000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success) { pm.collectionVariables.set('token', res.data.token); }",
+                  "pm.test('login success', function () { pm.expect(res.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"password123\"}"
+            },
+            "url": "{{yii_base}}/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Master Data",
+      "item": [
+        {
+          "name": "List Patients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/patients?search=budi"
+          }
+        },
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Budi Santoso\",\"birth_date\":\"1990-05-10\",\"gender\":\"L\",\"nik\":\"3201234567890001\",\"phone\":\"081234567890\"}"
+            },
+            "url": "{{yii_base}}/patients"
+          }
+        },
+        {
+          "name": "List Polyclinics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/polyclinics"
+          }
+        },
+        {
+          "name": "List Doctor Schedules",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/doctor-schedules?polyclinic_id=1&day_of_week=3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Visit Flow",
+      "item": [
+        {
+          "name": "Register Visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patient_id\":1,\"doctor_id\":1,\"polyclinic_id\":1,\"visit_date\":\"2026-11-18\"}"
+            },
+            "url": "{{yii_base}}/visits/register"
+          }
+        },
+        {
+          "name": "List Visits (Queue)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/visits?date=2026-11-18"
+          }
+        },
+        {
+          "name": "Create Medical Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"visit_id\":1,\"anamnesis\":\"Demam 3 hari\",\"complaint\":\"Demam, batuk\",\"vital_signs\":{\"td\":\"120/80\",\"nadi\":82,\"suhu\":37.8,\"rr\":20},\"physical_exam\":\"Dalam batas normal\",\"primary_diagnosis\":\"ISPA\"}"
+            },
+            "url": "{{yii_base}}/medical-records"
+          }
+        },
+        {
+          "name": "Add Visit Procedure",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"visit_id\":1,\"medical_procedure_id\":1,\"qty\":1}"
+            },
+            "url": "{{yii_base}}/visit-procedures"
+          }
+        },
+        {
+          "name": "Create Prescription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"visit_id\":1,\"items\":[{\"medicine_id\":1,\"dose\":\"3x1\",\"frequency\":\"3x sehari\",\"qty\":10}]}"
+            },
+            "url": "{{yii_base}}/prescriptions"
+          }
+        },
+        {
+          "name": "Dispense Prescription",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/prescriptions/1/dispense"
+          }
+        },
+        {
+          "name": "Create Lab Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"visit_id\":1,\"test_name\":\"Darah Lengkap\"}"
+            },
+            "url": "{{yii_base}}/lab-requests"
+          }
+        },
+        {
+          "name": "Submit Lab Result",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"lab_request_id\":1,\"result_text\":\"Hb 13.5, Leukosit 8500\"}"
+            },
+            "url": "{{yii_base}}/lab-results"
+          }
+        },
+        {
+          "name": "Get Invoice by Visit",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{yii_base}}/invoices/by-visit/1"
+          }
+        },
+        {
+          "name": "Pay Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":75000,\"method\":\"cash\",\"idempotency_key\":\"demo-key-0001\"}"
+            },
+            "url": "{{yii_base}}/invoices/1/pay"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Node.js Services",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": { "method": "GET", "url": "{{node_base}}/health" }
+        },
+        {
+          "name": "Dashboard - Visits Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{node_base}}/dashboard/visits-summary?from=2026-01-01&to=2026-12-31"
+          }
+        },
+        {
+          "name": "Dashboard - Revenue Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{node_base}}/dashboard/revenue-summary?from=2026-01-01&to=2026-12-31"
+          }
+        },
+        {
+          "name": "Integration - Submit External Lab Result",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"lab_request_id\":1,\"result_text\":\"Hb 13.5\"}"
+            },
+            "url": "{{node_base}}/integrations/lab-results"
+          }
+        }
+      ]
+    }
+  ]
+}

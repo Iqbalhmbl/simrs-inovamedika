@@ -1,0 +1,37 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f6f8;
+  color: #1a1a1a;
+}
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px; background: #0f3d5c; color: #fff; padding: 20px 0; flex-shrink: 0;
+}
+.sidebar h2 { padding: 0 20px; font-size: 18px; }
+.sidebar a {
+  display: block; padding: 10px 20px; color: #cfe3f0; text-decoration: none;
+}
+.sidebar a.active, .sidebar a:hover { background: #155a82; color: #fff; }
+.content { flex: 1; padding: 24px; }
+.card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.1); margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; font-size: 14px; }
+th { background: #f0f2f5; }
+input, select, textarea, button {
+  font-size: 14px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px;
+}
+button { cursor: pointer; background: #0f3d5c; color: #fff; border: none; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.secondary { background: #e5e5e5; color: #222; }
+.form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.form-row > div { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 4px; }
+.error { color: #b00020; font-size: 13px; }
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; }
+.badge.waiting { background: #e0a800; }
+.badge.examined { background: #0d6efd; }
+.badge.completed { background: #198754; }
+.badge.cancelled { background: #6c757d; }
+.login-page { display: flex; align-items: center; justify-content: center; height: 100vh; }
+.login-box { width: 340px; }
