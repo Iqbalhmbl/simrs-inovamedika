@@ -19,22 +19,6 @@ class AuthController extends Controller
     {
         $behaviors = parent::behaviors();
 
-        // See BaseApiController for why this + beforeAction() are needed:
-        // the browser's CORS preflight (OPTIONS) has no Authorization header
-        // and isn't a POST, so it must be answered before the authenticator
-        // or verb filter ever run - this is most critical here because
-        // /auth/login is the very first request the frontend makes.
-        $behaviors['corsFilter'] = [
-            'class' => Cors::class,
-            'cors' => [
-                'Origin' => array_filter(explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: 'http://localhost:5173,http://127.0.0.1:5173')),
-                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                'Access-Control-Request-Headers' => ['*'],
-                'Access-Control-Allow-Credentials' => null,
-                'Access-Control-Max-Age' => 3600,
-            ],
-        ];
-
         $behaviors['contentNegotiator'] = [
             'class' => ContentNegotiator::class,
             'formats' => ['application/json' => Response::FORMAT_JSON],
@@ -44,16 +28,30 @@ class AuthController extends Controller
             'authMethods' => [JwtHttpBearerAuth::class],
             'except' => ['login'],
         ];
-        return $behaviors;
-    }
 
-    public function beforeAction($action)
-    {
-        if (Yii::$app->request->isOptions) {
-            Yii::$app->response->statusCode = 200;
-            Yii::$app->end();
-        }
-        return parent::beforeAction($action);
+        // See BaseApiController for the full explanation. In short:
+        // yii\filters\Cors answers the browser's preflight (OPTIONS) AND
+        // stops further processing for it on its own - but only if it runs
+        // BEFORE verbFilter/authenticator, since those would otherwise
+        // reject an OPTIONS request (no Authorization header, wrong verb)
+        // before Cors ever gets a chance to add headers. Putting
+        // 'corsFilter' first via the + operator guarantees that order -
+        // this is the single most important fix here, since /auth/login is
+        // the very first request the frontend makes.
+        $corsFilter = [
+            'corsFilter' => [
+                'class' => Cors::class,
+                'cors' => [
+                    'Origin' => array_filter(explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: 'http://localhost:5173,http://127.0.0.1:5173')),
+                    'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                    'Access-Control-Request-Headers' => ['*'],
+                    'Access-Control-Allow-Credentials' => null,
+                    'Access-Control-Max-Age' => 3600,
+                ],
+            ],
+        ];
+
+        return $corsFilter + $behaviors;
     }
 
     public function verbs()
