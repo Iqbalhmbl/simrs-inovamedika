@@ -34,6 +34,11 @@ class PrescriptionController extends BaseApiController
     public function actions()
     {
         $actions = parent::actions();
+        // 'create' is overridden below (creates the prescription + its items
+        // transactionally, snapshotting price_at_time) - must unset, or the
+        // default CreateAction runs instead, saves only the bare Prescription
+        // row, and every item (and the price snapshot) is silently dropped.
+        unset($actions['create']);
         $actions['index']['prepareDataProvider'] = function () {
             $query = Prescription::find()->with(['items.medicine'])->orderBy(['created_at' => SORT_DESC]);
             if ($status = Yii::$app->request->get('status')) {

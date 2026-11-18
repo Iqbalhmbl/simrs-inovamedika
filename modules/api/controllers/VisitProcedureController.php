@@ -27,7 +27,15 @@ class VisitProcedureController extends BaseApiController
     public function actions()
     {
         $actions = parent::actions();
-        unset($actions['delete']);
+        // Both 'create' and 'delete' are overridden below with custom logic
+        // (tariff snapshot on create; void+re-bill instead of hard-delete on
+        // delete). They MUST be unset here, otherwise Yii2's ActiveController
+        // still owns those action ids and your own actionCreate()/actionDelete()
+        // methods are never called - this was the actual bug: the raw
+        // ActiveController CreateAction saved only the body's fields
+        // (visit_id, medical_procedure_id, qty), skipping the tariff_at_time
+        // snapshot entirely, which then violated the NOT NULL constraint.
+        unset($actions['create'], $actions['delete']);
         return $actions;
     }
 

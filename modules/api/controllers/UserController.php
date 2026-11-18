@@ -20,6 +20,19 @@ class UserController extends BaseApiController
         '*' => ['admin'],
     ];
 
+    public function actions()
+    {
+        $actions = parent::actions();
+        // 'create' and 'update' are overridden below (hash the password,
+        // generate auth_key, and sync RBAC role assignment) - must unset,
+        // or the default ActiveController actions run instead, saving a
+        // user with no password_hash/auth_key (login impossible) and never
+        // touching auth_assignment (RbacFilter and the role column would
+        // disagree about what the user can do).
+        unset($actions['create'], $actions['update']);
+        return $actions;
+    }
+
     public function actionCreate()
     {
         $body = Yii::$app->request->bodyParams;

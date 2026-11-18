@@ -17,6 +17,16 @@ class LabResultController extends BaseApiController
         'create' => ['admin', 'petugas_laboratorium'],
     ];
 
+    public function actions()
+    {
+        $actions = parent::actions();
+        // 'create' is overridden below (snapshots lab_request_id lookup and
+        // re-bills the visit) - must unset, or the default CreateAction runs
+        // instead and this logic never executes.
+        unset($actions['create']);
+        return $actions;
+    }
+
     public function actionCreate()
     {
         $body = Yii::$app->request->bodyParams;

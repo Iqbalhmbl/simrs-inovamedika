@@ -25,6 +25,10 @@ class LabRequestController extends BaseApiController
     public function actions()
     {
         $actions = parent::actions();
+        // 'create' is overridden below (sets requested_by) - it must be
+        // unset here, or Yii2's default ActiveController CreateAction keeps
+        // owning that action id and actionCreate() is never called.
+        unset($actions['create']);
         $actions['index']['prepareDataProvider'] = function () {
             $query = LabRequest::find()->with(['result'])->orderBy(['created_at' => SORT_ASC]);
             if ($status = Yii::$app->request->get('status')) {

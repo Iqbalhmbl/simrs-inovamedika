@@ -27,6 +27,16 @@ class MedicalRecordController extends BaseApiController
         return array_merge(parent::verbs(), ['by-visit' => ['GET']]);
     }
 
+    public function actions()
+    {
+        $actions = parent::actions();
+        // 'create' is overridden below (sets examined_by and flips the
+        // visit's status) - must unset, or the default CreateAction runs
+        // instead and this logic never executes.
+        unset($actions['create']);
+        return $actions;
+    }
+
     public function actionByVisit($visitId)
     {
         $record = MedicalRecord::findOne(['visit_id' => $visitId]);
