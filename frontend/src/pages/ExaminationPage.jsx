@@ -4,6 +4,7 @@ import { yiiApi } from '../api/client';
 
 export default function ExaminationPage() {
   const { visitId } = useParams();
+  const [visit, setVisit] = useState(null);
   const [record, setRecord] = useState({
     anamnesis: '', complaint: '', physical_exam: '',
     primary_diagnosis: '', secondary_diagnosis: '',
@@ -17,6 +18,7 @@ export default function ExaminationPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    yiiApi.get(`/visits/${visitId}`).then((res) => setVisit(res.data));
     yiiApi.get('/medical-procedures').then((res) => setProcedures(res.data.items || res.data));
     yiiApi.get('/medicines').then((res) => setMedicines(res.data.items || res.data));
     yiiApi
@@ -49,10 +51,20 @@ export default function ExaminationPage() {
   async function submitPrescription(e) {
     e.preventDefault();
     setError(null);
+    const items = prescriptionItems.filter((i) => i.medicine_id);
+    if (items.length === 0) {
+      setError('Pilih minimal satu obat sebelum membuat resep.');
+      return;
+    }
+    if (!visit?.doctor_id) {
+      setError('Dokter untuk kunjungan ini tidak ditemukan. Muat ulang halaman.');
+      return;
+    }
     try {
       await yiiApi.post('/prescriptions', {
         visit_id: visitId,
-        items: prescriptionItems.filter((i) => i.medicine_id),
+        doctor_id: visit.doctor_id,
+        items,
       });
       setMessage('Resep berhasil dibuat.');
       setPrescriptionItems([{ medicine_id: '', dose: '', frequency: '', qty: 1 }]);
@@ -73,6 +85,11 @@ export default function ExaminationPage() {
   return (
     <div>
       <h1>Pemeriksaan - Kunjungan #{visitId}</h1>
+      {visit && (
+        <p style={{ color: '#555', marginTop: -8 }}>
+          {visit.patient?.name} ({visit.patient?.mrn}) &middot; {visit.polyclinic?.name} &middot; dr. {visit.doctor?.name}
+        </p>
+      )}
       {message && <p style={{ color: '#198754' }}>{message}</p>}
       {error && <p className="error">{error}</p>}
 
