@@ -5,6 +5,7 @@ namespace app\controllers;
 use Yii;
 use Firebase\JWT\JWT;
 use yii\rest\Controller;
+use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
@@ -17,6 +18,23 @@ class AuthController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+
+        // See BaseApiController for why this + beforeAction() are needed:
+        // the browser's CORS preflight (OPTIONS) has no Authorization header
+        // and isn't a POST, so it must be answered before the authenticator
+        // or verb filter ever run - this is most critical here because
+        // /auth/login is the very first request the frontend makes.
+        $behaviors['corsFilter'] = [
+            'class' => Cors::class,
+            'cors' => [
+                'Origin' => array_filter(explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: 'http://localhost:5173,http://127.0.0.1:5173')),
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => null,
+                'Access-Control-Max-Age' => 3600,
+            ],
+        ];
+
         $behaviors['contentNegotiator'] = [
             'class' => ContentNegotiator::class,
             'formats' => ['application/json' => Response::FORMAT_JSON],
@@ -27,6 +45,15 @@ class AuthController extends Controller
             'except' => ['login'],
         ];
         return $behaviors;
+    }
+
+    public function beforeAction($action)
+    {
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            Yii::$app->end();
+        }
+        return parent::beforeAction($action);
     }
 
     public function verbs()

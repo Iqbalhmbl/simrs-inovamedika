@@ -3,6 +3,7 @@
 namespace app\modules\api\controllers;
 
 use Yii;
+use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\filters\auth\CompositeAuth;
 use yii\rest\ActiveController;
@@ -26,6 +27,23 @@ abstract class BaseApiController extends ActiveController
     {
         $behaviors = parent::behaviors();
 
+        // Frontend (React, e.g. http://localhost:5173) and backend
+        // (http://localhost:8080) run on different origins, so the browser
+        // sends a CORS preflight (OPTIONS) before every real request. This
+        // must run before the authenticator, and the OPTIONS request itself
+        // must never require a token (the browser sends no Authorization
+        // header on a preflight) - see beforeAction() below.
+        $behaviors['corsFilter'] = [
+            'class' => Cors::class,
+            'cors' => [
+                'Origin' => array_filter(explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: 'http://localhost:5173,http://127.0.0.1:5173')),
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => null,
+                'Access-Control-Max-Age' => 3600,
+            ],
+        ];
+
         $behaviors['contentNegotiator'] = [
             'class' => ContentNegotiator::class,
             'formats' => ['application/json' => Response::FORMAT_JSON],
@@ -48,6 +66,22 @@ abstract class BaseApiController extends ActiveController
     protected function authExceptActions(): array
     {
         return [];
+    }
+
+    /**
+     * yii\filters\Cors answers the preflight's headers, but Yii still runs
+     * the rest of the behavior chain (including the JWT authenticator)
+     * unless we short-circuit here - an OPTIONS preflight carries no
+     * Authorization header, so it would otherwise fail with 401 and the
+     * browser would never send the real request.
+     */
+    public function beforeAction($action)
+    {
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            Yii::$app->end();
+        }
+        return parent::beforeAction($action);
     }
 
     public function actions()

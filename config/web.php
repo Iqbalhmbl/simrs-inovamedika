@@ -59,8 +59,15 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                'POST api/auth/login' => 'auth/login',
-                'GET api/auth/me' => 'auth/me',
+                // Custom (non-REST-CRUD) routes are declared with an explicit
+                // 'verb' list that always includes OPTIONS - a plain 'POST
+                // api/...' pattern only matches POST, so the browser's CORS
+                // preflight (always OPTIONS) would 404 here before ever
+                // reaching the controller/CORS filter. yii\rest\UrlRule
+                // (used for the CRUD routes below) already adds OPTIONS to
+                // every route it generates, so those don't need this.
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['POST', 'OPTIONS'], 'pattern' => 'api/auth/login', 'route' => 'auth/login'],
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['GET', 'OPTIONS'], 'pattern' => 'api/auth/me', 'route' => 'auth/me'],
 
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/patient'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/doctor'],
@@ -70,23 +77,23 @@ $config = [
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/medicine'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/user'],
 
-                'POST api/visits/register' => 'api/visit/register',
-                'POST api/visits/<id>/complete' => 'api/visit/complete',
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['POST', 'OPTIONS'], 'pattern' => 'api/visits/register', 'route' => 'api/visit/register'],
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['POST', 'OPTIONS'], 'pattern' => 'api/visits/<id>/complete', 'route' => 'api/visit/complete'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/visit'],
 
-                'GET api/medical-records/by-visit/<visitId>' => 'api/medical-record/by-visit',
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['GET', 'OPTIONS'], 'pattern' => 'api/medical-records/by-visit/<visitId>', 'route' => 'api/medical-record/by-visit'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/medical-record'],
 
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/visit-procedure'],
 
-                'POST api/prescriptions/<id>/dispense' => 'api/prescription/dispense',
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['POST', 'OPTIONS'], 'pattern' => 'api/prescriptions/<id>/dispense', 'route' => 'api/prescription/dispense'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/prescription'],
 
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/lab-request'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/lab-result'],
 
-                'GET api/invoices/by-visit/<visitId>' => 'api/invoice/by-visit',
-                'POST api/invoices/<id>/pay' => 'api/invoice/pay',
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['GET', 'OPTIONS'], 'pattern' => 'api/invoices/by-visit/<visitId>', 'route' => 'api/invoice/by-visit'],
+                ['class' => \yii\web\UrlRule::class, 'verb' => ['POST', 'OPTIONS'], 'pattern' => 'api/invoices/<id>/pay', 'route' => 'api/invoice/pay'],
                 ['class' => \yii\rest\UrlRule::class, 'controller' => 'api/invoice'],
             ],
         ],
