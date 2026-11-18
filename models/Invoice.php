@@ -35,4 +35,16 @@ class Invoice extends ActiveRecord
     {
         return $this->hasOne(Visit::class, ['id' => 'visit_id']);
     }
+
+    /**
+     * InvoiceController::actionByVisit() explicitly requests these via
+     * toArray([], ['payments', 'visit']) - Yii2 only honors that $expand
+     * argument for relations named here. Without this, both were silently
+     * dropped: BillingPage's payment history table was always empty, and
+     * the printed invoice had no patient/poli/dokter/visit date at all.
+     */
+    public function extraFields()
+    {
+        return ['payments', 'visit'];
+    }
 }

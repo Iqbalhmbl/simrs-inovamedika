@@ -32,7 +32,7 @@ class InvoiceController extends BaseApiController
         if ($invoice === null) {
             $invoice = (new BillingService())->recalculate((int) $visitId);
         }
-        return $invoice->toArray([], ['payments']);
+        return $invoice->toArray([], ['payments', 'visit']);
     }
 
     /**
